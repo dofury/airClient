@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AirBar extends StatelessWidget with PreferredSizeWidget{
   const AirBar({super.key});
@@ -6,9 +7,10 @@ class AirBar extends StatelessWidget with PreferredSizeWidget{
   @override
   PreferredSizeWidget build(BuildContext context) {
     return AppBar(
-    title: const Text('항공 어플', style: TextStyle(fontFamily: "MaruBuri")),
+    title: const Text('항공 어플',
+        style: TextStyle(fontFamily: 'MaruBuri',fontSize: 25,fontWeight: FontWeight.w600 ),),
+  centerTitle: true,
   backgroundColor: Colors.indigoAccent,
-  leading: const Icon(Icons.arrow_back),
   actions: const [
   Padding(padding: EdgeInsets.all(10.0), child: Icon(Icons.more_horiz),
   )

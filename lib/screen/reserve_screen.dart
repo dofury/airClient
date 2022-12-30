@@ -1,8 +1,31 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
-class ReserveScreen extends StatelessWidget {
-  const ReserveScreen({super.key});
+class ReserveScreen extends StatefulWidget {
+  ReserveScreen({super.key});
+
+  @override
+  State<ReserveScreen> createState() => _ReserveScreenState();
+}
+
+class _ReserveScreenState extends State<ReserveScreen> {
+  bool is_wayPart = true;
+  var regionData1 = selectRegion(0);
+  var regionData2 = selectRegion(1);
+  var dateDate1 = selectDate();
+  var dateDate2 = selectDate();
+  void clickPart() {
+    setState(() {
+      if (is_wayPart == true) {
+        is_wayPart = false;
+      } else {
+        is_wayPart = true;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,35 +36,16 @@ class ReserveScreen extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(30.0),
-              child: const SizedBox(
+              child: SizedBox(
                 child: Text("쉽고 편한 최저가 항공권 예약",
-                    style: TextStyle(fontSize: 30, fontFamily: "MaruBuri")),
+                    style: TextStyle(
+                      fontSize: ScreenUtil().setSp(100),
+                    )),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(15.0),
-              child: Row(
-                children: [
-                  TextButton(
-                      onPressed: null,
-                      child: Text(
-                        "왕복",
-                        style: TextStyle(
-                            fontFamily: "MaruBuri",
-                            fontSize: 30,
-                            color: Colors.blue),
-                      )),
-                  TextButton(
-                      onPressed: null,
-                      child: Text(
-                        "편도",
-                        style: TextStyle(
-                          fontFamily: "MaruBuri",
-                          fontSize: 30,
-                        ),
-                      ))
-                ],
-              ),
+              child: wayPart(is_wayPart: is_wayPart, clickPart: clickPart),
             ),
             Padding(
               padding: const EdgeInsets.all(15),
@@ -50,40 +54,43 @@ class ReserveScreen extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.all(10),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Flexible(
-                            child: Icon(Icons.gps_fixed, size: 25.0),
-                            flex: 1),
-                        Flexible(child: selectRegion(0), flex: 10),
+                            flex: 1,
+                            child: Icon(Icons.local_airport,
+                                size: ScreenUtil().setHeight(100))),
+                        Flexible(child: regionData1, flex: 10),
                       ],
                     ),
                   ),
                   Padding(
                     padding: EdgeInsets.all(10),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Flexible(
-                            child: Icon(Icons.gps_fixed, size: 25.0),
-                            flex: 1),
-                        Flexible(child: selectRegion(1), flex: 10),
+                          flex: 1,
+                          child: Icon(Icons.local_airport,
+                              size: ScreenUtil().setHeight(100)),
+                        ),
+                        Flexible(child: regionData2, flex: 10),
                       ],
                     ),
                   ),
                   Padding(
                       padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                      child: selectDate()),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                    child: TextField(
-                      decoration: InputDecoration(
-                          border: OutlineInputBorder(), labelText: '인원'),
-                    ),
-                  ),
+                      child: dateDate1),
+                  is_wayPart == true
+                      ? Padding(
+                          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                          child: dateDate2)
+                      : Text(""),
                   OutlinedButton(
-                    onPressed: null,
-                    child: Text("항공권 검색"),
+                    onPressed: _transData,
+                    child: Text(
+                        style: TextStyle(fontSize: ScreenUtil().setSp(50)),
+                        "항공권 검색"),
                   )
                 ],
               ),
@@ -93,27 +100,94 @@ class ReserveScreen extends StatelessWidget {
       ),
     );
   }
+
+  _transData() {
+    String test = "";
+    test += regionData1.getRegion()!;
+    test += regionData2.getRegion()!;
+    test+= dateDate1.getDate()!;
+    if(is_wayPart == true) {
+      test+= dateDate2.getDate()!;
+    }
+  }
 }
+
+class wayPart extends StatefulWidget {
+  bool is_wayPart;
+  Color color = Colors.grey;
+  Text? wayText1;
+  Text? wayText2;
+  wayPart({required bool this.is_wayPart, required this.clickPart, Key? key})
+      : super(key: key) {
+    init();
+  }
+  final Function() clickPart;
+  init() {
+    wayText1 = Text(
+      "왕복",
+      style: TextStyle(
+          fontSize: ScreenUtil().setSp(90),
+          color: is_wayPart == true ? Colors.blue : Colors.grey),
+    );
+    wayText2 = Text(
+      "편도",
+      style: TextStyle(
+          fontSize: ScreenUtil().setSp(90),
+          color: is_wayPart == false ? Colors.blue : Colors.grey),
+    );
+  }
+
+  bool getWayPart() => is_wayPart;
+  @override
+  State<wayPart> createState() => _wayPartState();
+}
+
+class _wayPartState extends State<wayPart> {
+  Row build(BuildContext context) {
+    return Row(
+      children: [
+        TextButton(onPressed: _clickPart1, child: widget.wayText1!),
+        TextButton(onPressed: _clickPart2, child: widget.wayText2!)
+      ],
+    );
+  }
+
+  void _clickPart1() {
+    if (widget.is_wayPart == false) widget.clickPart();
+  }
+
+  void _clickPart2() {
+    if (widget.is_wayPart == true) widget.clickPart();
+  }
+}
+
 class selectRegion extends StatefulWidget {
   final int check;
-  const selectRegion(this.check);
+  selectRegion(this.check);
+  String? _selectedValue;
   selectRegion.withA({Key? key, required this.check}) : super(key: key);
 
   @override
   State<selectRegion> createState() => _selectRegionState();
+  String? getRegion() => _selectedValue;
 }
 
 class _selectRegionState extends State<selectRegion> {
   final _valueList = ['서울', '부산', '제주', '김포', '김해', '인천'];
-  String? _selectedValue;
-  String? textName = 't';
+  String? textName;
   @override
   Widget build(BuildContext context) {
     textCheck(widget.check);
     return DropdownButton(
       isExpanded: true,
-      hint: Text(textName!),
-      value: _selectedValue,
+      hint: Text(
+        textName!,
+        style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+            fontSize: ScreenUtil().setSp(60)),
+      ),
+      value: widget._selectedValue,
       items: _valueList.map((e) {
         return DropdownMenuItem(
           child: Text(e),
@@ -122,7 +196,7 @@ class _selectRegionState extends State<selectRegion> {
       }).toList(),
       onChanged: (val) {
         setState(() {
-          _selectedValue = val as String;
+          widget._selectedValue = val as String;
         });
       },
     );
@@ -138,51 +212,57 @@ class _selectRegionState extends State<selectRegion> {
 }
 
 class selectDate extends StatefulWidget {
-  const selectDate({Key? key}) : super(key: key);
-
+  selectDate({Key? key}) : super(key: key);
+  String? date = '날짜';
   @override
   State<selectDate> createState() => _selectDateState();
+  String? getDate() => date;
 }
 
 class _selectDateState extends State<selectDate> {
-  String? date = '날짜';
+
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-        onPressed: () {
-          Future<DateTime?> future = showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(2018),
-              lastDate: DateTime(2030),
-              builder: (BuildContext context, Widget? child) {
-                return Theme(data: ThemeData.dark(), child: child!);
-              });
-          future.then((date) {
-            setState(() {
-              this.date = DateFormat('yy/MM/dd').format(date!);
-            });
-          });
-        },
-        child: Text(date!));
+    return Row(
+      children: [
+        IconButton(
+          icon: Icon(Icons.calendar_month, color: Colors.black),
+          iconSize: ScreenUtil().setSp(150),
+          onPressed: () {
+            showPicker();
+          },
+        ),
+        TextButton(
+          onPressed: () {
+            showPicker();
+          },
+          child: Text(
+            widget.date!,
+            style: TextStyle(
+                fontFamily: 'MaruBuri',
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+                fontSize: ScreenUtil().setSp((60))),
+          ),
+        )
+      ],
+    );
+  }
 
-    /* DatePicker 띄우기 */
-    void showDatePickerPop() {
-      Future<DateTime?> selectedDate = showDatePicker(
+  showPicker() {
+    Future<DateTime?> future = showDatePicker(
         context: context,
         initialDate: DateTime.now(),
-        //초기값
-        firstDate: DateTime(2020),
-        //시작일
-        lastDate: DateTime(2022),
-        //마지막일
+        firstDate: DateTime(2022),
+        lastDate: DateTime(2030),
         builder: (BuildContext context, Widget? child) {
-          return Theme(
-            data: ThemeData.dark(), //다크 테마
-            child: child!,
-          );
-        },
-      );
-    }
+          return Theme(data: ThemeData.dark(), child: child!);
+        });
+    future.then((date) {
+      setState(() {
+        widget.date = DateFormat('yy/MM/dd').format(date!);
+        print(date);
+      });
+    });
   }
 }
