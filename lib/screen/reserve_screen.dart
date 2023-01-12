@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:airplain_reserve/screen/reserve_result.dart';
+import 'package:airplain_reserve/screen/reserve_result1.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,27 +19,28 @@ class ReserveScreen extends StatefulWidget {
 }
 
 class _ReserveScreenState extends State<ReserveScreen> {
-  bool is_wayPart = true;
+  bool isWayPart = true;
   bool loading = false;
   var regionData1 = selectRegion(0);
   var regionData2 = selectRegion(1);
-  var dateDate1 = selectDate();
-  var dateDate2 = selectDate();
+  var dateData1 = selectDate();
+  var dateData2 = selectDate();
+  var status = '';
   late List<Ticket> _ticketList = [];
   void clickPart() {
     setState(() {
-      if (is_wayPart == true) {
-        is_wayPart = false;
+      if (isWayPart == true) {
+        isWayPart = false;
       } else {
-        is_wayPart = true;
+        isWayPart = true;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Align(
+    return Stack(children: [
+      Align(
         alignment: Alignment.bottomCenter,
         child: Column(
           children: [
@@ -53,7 +55,7 @@ class _ReserveScreenState extends State<ReserveScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(15.0),
-              child: wayPart(is_wayPart: is_wayPart, clickPart: clickPart),
+              child: WayPart(isWayPart: isWayPart, clickPart: clickPart),
             ),
             Padding(
               padding: const EdgeInsets.all(15),
@@ -86,14 +88,13 @@ class _ReserveScreenState extends State<ReserveScreen> {
                       ],
                     ),
                   ),
-                  loading == true ? CircularProgressIndicator() : Text(''),
                   Padding(
                       padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                      child: dateDate1),
-                  is_wayPart == true
+                      child: dateData1),
+                  isWayPart == true
                       ? Padding(
                           padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                          child: dateDate2)
+                          child: dateData2)
                       : Text(""),
                   OutlinedButton(
                     onPressed: () {
@@ -103,15 +104,41 @@ class _ReserveScreenState extends State<ReserveScreen> {
                       //progress indicator start show
                       _callAPI().then((result) {
                         setState(() {
-                          _ticketList.clear();
-                          _ticketList.addAll((result));
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ReserveResult(ticketList: _ticketList,),
-                            ),
-                          );
+                          if (result != 0) {
+                            _ticketList.clear();
+                            _ticketList.addAll((result));
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ReserveResult1(
+                                  isWayPart: isWayPart,
+                                  ticketList: _ticketList,
+                                  regionData2:
+                                      regionData2.getRegion().toString(),
+                                  regionData1:
+                                      regionData1.getRegion().toString(),
+                                  dateData2: dateData2.getDate().toString(),
+                                ),
+                              ),
+
+                            );
+                            Fluttertoast.showToast(
+                                msg: "데이터 불러오기 완료.",
+                                gravity: ToastGravity.BOTTOM,
+                                backgroundColor: Colors.white,
+                                textColor: Colors.black,
+                                fontSize: 20,
+                                toastLength: Toast.LENGTH_SHORT);
+                          } else {
+                            Fluttertoast.showToast(
+                                msg: "데이터를 받아올 수 없습니다.",
+                                gravity: ToastGravity.BOTTOM,
+                                backgroundColor: Colors.white,
+                                textColor: Colors.black,
+                                fontSize: 20,
+                                toastLength: Toast.LENGTH_SHORT);
+                          }
+                          loading = false;
                         });
-                        loading = false;
                       });
                     },
                     child: Text(
@@ -124,36 +151,38 @@ class _ReserveScreenState extends State<ReserveScreen> {
           ],
         ),
       ),
-    );
+      loading == true ? Center(child: CircularProgressIndicator()) : Text(''),
+    ]);
   }
 
-Future<List<Ticket>> _callAPI() async {
-    var url = Uri.parse(
-      'http://203.232.193.169:8080/air?depName='
-          +regionData1.getRegion()!
-          +'&arrName='
-          +regionData2.getRegion()!
-          +'&date='
-          +dateDate1.getDate()!
-    );
+  Future _callAPI() async {
+    var url = Uri.parse('http://203.232.193.169:8080/air?depName=' +
+        regionData1.getRegion()! +
+        '&arrName=' +
+        regionData2.getRegion()! +
+        '&date=' +
+        dateData1.getDate()!);
     final response = await http.get(url);
     String responseBody = utf8.decode(response.bodyBytes);
-    var dataObjJson = jsonDecode(responseBody) as List;
-    List<Ticket> parsedResponse = dataObjJson.map((dataJson) => Ticket.fromJson(dataJson)).toList();
-    return parsedResponse;
-
-
+    status = jsonDecode(responseBody)['status'].toString();
+    log(status);
+    if (status == "200") {
+      var dataObjJson = jsonDecode(responseBody)['data'] as List;
+      List<Ticket> parsedResponse =
+          dataObjJson.map((dataJson) => Ticket.fromJson(dataJson)).toList();
+      return parsedResponse;
+    } else {
+      return 0;
+    }
   }
-
-
 }
 
-class wayPart extends StatefulWidget {
-  bool is_wayPart;
+class WayPart extends StatefulWidget {
+  bool isWayPart;
   Color color = Colors.grey;
   Text? wayText1;
   Text? wayText2;
-  wayPart({required bool this.is_wayPart, required this.clickPart, Key? key})
+  WayPart({required bool this.isWayPart, required this.clickPart, Key? key})
       : super(key: key) {
     init();
   }
@@ -163,22 +192,22 @@ class wayPart extends StatefulWidget {
       "왕복",
       style: TextStyle(
           fontSize: ScreenUtil().setSp(90),
-          color: is_wayPart == true ? Colors.blue : Colors.grey),
+          color: isWayPart == true ? Colors.blue : Colors.grey),
     );
     wayText2 = Text(
       "편도",
       style: TextStyle(
           fontSize: ScreenUtil().setSp(90),
-          color: is_wayPart == false ? Colors.blue : Colors.grey),
+          color: isWayPart == false ? Colors.blue : Colors.grey),
     );
   }
 
-  bool getWayPart() => is_wayPart;
+  bool getWayPart() => isWayPart;
   @override
-  State<wayPart> createState() => _wayPartState();
+  State<WayPart> createState() => _WayPartState();
 }
 
-class _wayPartState extends State<wayPart> {
+class _WayPartState extends State<WayPart> {
   Row build(BuildContext context) {
     return Row(
       children: [
@@ -189,11 +218,11 @@ class _wayPartState extends State<wayPart> {
   }
 
   void _clickPart1() {
-    if (widget.is_wayPart == false) widget.clickPart();
+    if (widget.isWayPart == false) widget.clickPart();
   }
 
   void _clickPart2() {
-    if (widget.is_wayPart == true) widget.clickPart();
+    if (widget.isWayPart == true) widget.clickPart();
   }
 }
 
@@ -209,7 +238,23 @@ class selectRegion extends StatefulWidget {
 }
 
 class _selectRegionState extends State<selectRegion> {
-  final _valueList = ['서울', '부산', '제주', '김포', '김해', '인천'];
+  final _valueList = [
+    '광주',
+    '군산',
+    '김포',
+    '김해',
+    '대구',
+    '무안',
+    '사천',
+    '양양',
+    '여수',
+    '울산',
+    '원주',
+    '인천',
+    '제주',
+    '포항',
+    '청주'
+  ];
   String? textName;
   @override
   Widget build(BuildContext context) {
@@ -218,10 +263,7 @@ class _selectRegionState extends State<selectRegion> {
       isExpanded: true,
       hint: Text(
         textName!,
-        style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-            fontSize: ScreenUtil().setSp(60)),
+        style: TextStyle(color: Colors.grey, fontSize: ScreenUtil().setSp(60)),
       ),
       value: widget._selectedValue,
       items: _valueList.map((e) {
@@ -252,8 +294,7 @@ class selectDate extends StatefulWidget {
   String? date = '날짜';
   @override
   State<selectDate> createState() => _selectDateState();
-  String? getDate()
-  {
+  String? getDate() {
     String? tmpDate = '';
     tmpDate = date?.replaceAll('/', '');
     tmpDate = '20' + tmpDate!;
@@ -262,7 +303,6 @@ class selectDate extends StatefulWidget {
 }
 
 class _selectDateState extends State<selectDate> {
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -282,8 +322,7 @@ class _selectDateState extends State<selectDate> {
             widget.date!,
             style: TextStyle(
                 fontFamily: 'MaruBuri',
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: widget.date == '날짜' ? Colors.grey : Colors.black,
                 fontSize: ScreenUtil().setSp((60))),
           ),
         )
