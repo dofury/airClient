@@ -82,7 +82,7 @@ class _ReserveResult2State extends State<ReserveResult2> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text('${widget.ticketList![index].ticketCharge}원')
+                      Text(_getCharge(widget.ticketList![index].ticketCharge.toString()))
                     ],
                   )
                 ],
@@ -173,6 +173,14 @@ class _ReserveResult2State extends State<ReserveResult2> {
 
 
     return '$hour시간 $minute분';
+  }
+  String _getCharge(String charge){
+    String result;
+    if(charge == '999999')
+      result = "홈페이지 참조";
+    else
+      result = charge + '원';
+    return result;
   }
 
 }

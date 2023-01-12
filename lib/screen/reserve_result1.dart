@@ -169,7 +169,7 @@ class _ReserveResult1State extends State<ReserveResult1> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text('${widget.ticketList![index].ticketCharge}원')
+                       Text(_getCharge(widget.ticketList![index].ticketCharge.toString())),
                       ],
                     )
                   ],
@@ -227,7 +227,7 @@ class _ReserveResult1State extends State<ReserveResult1> {
     return transData;
   }
 
-  String? _getTime(var dep, var arr) {
+  String _getTime(var dep, var arr) {
     var depHour, arrHour;
     var depMinute, arrMinute;
     var hour, minute;
@@ -251,6 +251,14 @@ class _ReserveResult1State extends State<ReserveResult1> {
     minute = arrMinute - depMinute;
 
     return '$hour시간 $minute분';
+  }
+  String _getCharge(String charge){
+    String result;
+    if(charge == '999999')
+      result = "홈페이지 참조";
+    else
+      result = charge + '원';
+    return result;
   }
 
   Future _callAPI() async {
