@@ -1,8 +1,14 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:airplain_reserve/screen/reserve_result.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+
+import '../dto/ticket.dart';
 
 class ReserveScreen extends StatefulWidget {
   ReserveScreen({super.key});
@@ -13,10 +19,12 @@ class ReserveScreen extends StatefulWidget {
 
 class _ReserveScreenState extends State<ReserveScreen> {
   bool is_wayPart = true;
+  bool loading = false;
   var regionData1 = selectRegion(0);
   var regionData2 = selectRegion(1);
   var dateDate1 = selectDate();
   var dateDate2 = selectDate();
+  late List<Ticket> _ticketList = [];
   void clickPart() {
     setState(() {
       if (is_wayPart == true) {
@@ -39,7 +47,7 @@ class _ReserveScreenState extends State<ReserveScreen> {
               child: SizedBox(
                 child: Text("쉽고 편한 최저가 항공권 예약",
                     style: TextStyle(
-                      fontSize: ScreenUtil().setSp(100),
+                      fontSize: ScreenUtil().setSp(85),
                     )),
               ),
             ),
@@ -78,6 +86,7 @@ class _ReserveScreenState extends State<ReserveScreen> {
                       ],
                     ),
                   ),
+                  loading == true ? CircularProgressIndicator() : Text(''),
                   Padding(
                       padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
                       child: dateDate1),
@@ -87,7 +96,24 @@ class _ReserveScreenState extends State<ReserveScreen> {
                           child: dateDate2)
                       : Text(""),
                   OutlinedButton(
-                    onPressed: _transData,
+                    onPressed: () {
+                      setState(() {
+                        loading = true;
+                      });
+                      //progress indicator start show
+                      _callAPI().then((result) {
+                        setState(() {
+                          _ticketList.clear();
+                          _ticketList.addAll((result));
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ReserveResult(ticketList: _ticketList,),
+                            ),
+                          );
+                        });
+                        loading = false;
+                      });
+                    },
                     child: Text(
                         style: TextStyle(fontSize: ScreenUtil().setSp(50)),
                         "항공권 검색"),
@@ -101,15 +127,25 @@ class _ReserveScreenState extends State<ReserveScreen> {
     );
   }
 
-  _transData() {
-    String test = "";
-    test += regionData1.getRegion()!;
-    test += regionData2.getRegion()!;
-    test+= dateDate1.getDate()!;
-    if(is_wayPart == true) {
-      test+= dateDate2.getDate()!;
-    }
+Future<List<Ticket>> _callAPI() async {
+    var url = Uri.parse(
+      'http://203.232.193.169:8080/air?depName='
+          +regionData1.getRegion()!
+          +'&arrName='
+          +regionData2.getRegion()!
+          +'&date='
+          +dateDate1.getDate()!
+    );
+    final response = await http.get(url);
+    String responseBody = utf8.decode(response.bodyBytes);
+    var dataObjJson = jsonDecode(responseBody) as List;
+    List<Ticket> parsedResponse = dataObjJson.map((dataJson) => Ticket.fromJson(dataJson)).toList();
+    return parsedResponse;
+
+
   }
+
+
 }
 
 class wayPart extends StatefulWidget {
@@ -216,7 +252,13 @@ class selectDate extends StatefulWidget {
   String? date = '날짜';
   @override
   State<selectDate> createState() => _selectDateState();
-  String? getDate() => date;
+  String? getDate()
+  {
+    String? tmpDate = '';
+    tmpDate = date?.replaceAll('/', '');
+    tmpDate = '20' + tmpDate!;
+    return tmpDate;
+  }
 }
 
 class _selectDateState extends State<selectDate> {
@@ -261,7 +303,6 @@ class _selectDateState extends State<selectDate> {
     future.then((date) {
       setState(() {
         widget.date = DateFormat('yy/MM/dd').format(date!);
-        print(date);
       });
     });
   }
