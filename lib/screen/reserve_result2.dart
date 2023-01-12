@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:airplain_reserve/screen/reserve_result1.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../dto/ticket.dart';
+import '../util.dart';
 
 class ReserveResult2 extends StatefulWidget {
   List<Ticket>? ticketList;
@@ -45,7 +47,7 @@ class _ReserveResult2State extends State<ReserveResult2> {
         itemBuilder: (BuildContext context, int index) {
           return GestureDetector(
             onTap: (){
-              String link = _getWeb(widget.ticketList![index].airlineName)!;
+              String link = Util().getWeb(widget.ticketList![index].airlineName)!;
               if(link != 'error') {
                 launchUrl(Uri.parse(link));
               }
@@ -62,8 +64,8 @@ class _ReserveResult2State extends State<ReserveResult2> {
                 Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                Text('${_transTime(widget.ticketList![index].ticketDate)} - ${_transTime(widget.ticketList![index].depTime)} - ${_transTime(widget.ticketList![index].arrTime)}'),
-                Text('${_getTime(widget.ticketList![index].depTime!, widget.ticketList![index].arrTime!)}')
+                Text('${Util().transTime(widget.ticketList![index].ticketDate)} - ${Util().transTime(widget.ticketList![index].depTime)} - ${Util().transTime(widget.ticketList![index].arrTime)}'),
+                Text('${Util().getTime(widget.ticketList![index].depTime!, widget.ticketList![index].arrTime!)}')
                 ],
                 ),
                 Row(
@@ -82,7 +84,8 @@ class _ReserveResult2State extends State<ReserveResult2> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(_getCharge(widget.ticketList![index].ticketCharge.toString()))
+                      Text(Util().getCharge(
+                          widget.ticketList![index].ticketCharge.toString()))
                     ],
                   )
                 ],
@@ -97,90 +100,6 @@ class _ReserveResult2State extends State<ReserveResult2> {
 
     ));
   }
-  String? _getWeb(String airLine)
-  {
-    String? link;
-    switch(airLine)
-    {
-      case '진에어':
-        link = 'https://www.jinair.com/booking/index';
-        break;
-      case '제주항공':
-        link = 'https://www.jejuair.net/ko/main/base/index.do';
-        break;
-      case '대한항공':
-        link = 'https://www.koreanair.com/kr/ko';
-        break;
-      case '에어부산':
-        link = 'https://www.airbusan.com/content/individual/?';
-        break;
-      default:
-        link = 'error';
-    }
-    return link;
-  }
-  String? _transTime(String time)
-  {
-    String transData = '';
-    if(time.length == 4)
-      {
-        String hour,minute;
 
-        hour = time.substring(0,2);
-        minute = time.substring(2,4);
-        transData = '$hour:$minute';
-      }
-    else if(time.length == 8)
-      {
-        String year,month,day;
-
-        year = time.substring(0,4);
-        month = time.substring(4,6);
-        day = time.substring(6,8);
-        transData = '$year/$month/$day';
-      }
-    else
-      {
-        transData = 'error';
-      }
-
-    return transData;
-  }
-  String? _getTime(var dep,var arr)
-  {
-    var depHour,arrHour;
-    var depMinute,arrMinute;
-    var hour,minute;
-
-    depHour = int.parse(dep.substring(0,2));
-    depMinute = int.parse(dep.substring(2,4));
-    arrHour = int.parse(arr.substring(0,2));
-    arrMinute = int.parse(arr.substring(2,4));
-
-
-    if(arrMinute - depMinute < 0)//분이 0보다 작을시
-      {
-        arrMinute += 60;
-        arrHour -= 1;
-      }
-    if(arrHour - depHour < 0)//시가 0보다 작을시
-      {
-        arrHour += 24;
-      }
-
-    hour = arrHour-depHour;
-    minute = arrMinute - depMinute;
-
-
-    return '$hour시간 $minute분';
-  }
-  String _getCharge(String charge){
-    String result;
-    if(charge == '999999')
-      result = "홈페이지 참조";
-    else
-      result = charge + '원';
-    return result;
-  }
 
 }
