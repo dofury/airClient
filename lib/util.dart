@@ -1,3 +1,9 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:http/http.dart' as http;
+
+import 'dto/ticket.dart';
 class Util
 {
   String? getWeb(String airLine) {
@@ -93,6 +99,28 @@ class Util
     else
       result = charge + '원';
     return result;
+  }
+
+  Future callAPI(String dep,String arr,String date) async {
+    String status;
+    var url = Uri.parse('http://203.232.193.169:8080/air?depName=' +
+        dep +
+        '&arrName=' +
+        arr +
+        '&date=' +
+        date);
+    final response = await http.get(url);
+    String responseBody = utf8.decode(response.bodyBytes);
+    status = jsonDecode(responseBody)['status'].toString();
+    log(status);
+    if (status == "200") {
+      var dataObjJson = jsonDecode(responseBody)['data'] as List;
+      List<Ticket> parsedResponse =
+      dataObjJson.map((dataJson) => Ticket.fromJson(dataJson)).toList();
+      return parsedResponse;
+    } else {
+      return status;
+    }
   }
 
 }

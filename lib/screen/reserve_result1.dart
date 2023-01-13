@@ -52,9 +52,9 @@ class _ReserveResult1State extends State<ReserveResult1> {
                             setState(() {
                               loading = true;
                             });
-                            _callAPI().then((result) {
+                            Util().callAPI(widget.regionData2,widget.regionData1,widget.dateData2).then((result) {
                               setState(() {
-                                if (result != 0) {
+                                if (result != 404) {
                                   ticketList2.clear();
                                   ticketList2.addAll(result);
                                   Navigator.of(context).push(
@@ -90,6 +90,7 @@ class _ReserveResult1State extends State<ReserveResult1> {
                     : Align(
                         alignment: Alignment.bottomLeft,
                         child: FloatingActionButton(
+                          heroTag: "prev",
                           onPressed: () {
                             Navigator.pop(context);
                           },
@@ -103,6 +104,7 @@ class _ReserveResult1State extends State<ReserveResult1> {
                   padding: const EdgeInsets.all(8),
                   child: widget.isWayPart
                       ? FloatingActionButton(
+                    heroTag: "next",
                           onPressed: () {
                             Navigator.pop(context);
                           },
@@ -183,25 +185,5 @@ class _ReserveResult1State extends State<ReserveResult1> {
               height: 10.0,
               color: Colors.white24,
             ));
-  }
-  Future _callAPI() async {
-    var url = Uri.parse('http://203.232.193.169:8080/air?depName=' +
-        widget.regionData2! +
-        '&arrName=' +
-        widget.regionData1! +
-        '&date=' +
-        widget.dateData2!);
-    final response = await http.get(url);
-    String responseBody = utf8.decode(response.bodyBytes);
-    status = jsonDecode(responseBody)['status'].toString();
-    log(status);
-    if (status == "200") {
-      var dataObjJson = jsonDecode(responseBody)['data'] as List;
-      List<Ticket> parsedResponse =
-      dataObjJson.map((dataJson) => Ticket.fromJson(dataJson)).toList();
-      return parsedResponse;
-    } else {
-      return 0;
-    }
   }
 }

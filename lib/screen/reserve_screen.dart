@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
 import '../dto/ticket.dart';
+import '../util.dart';
 
 class ReserveScreen extends StatefulWidget {
   ReserveScreen({super.key});
@@ -101,8 +102,7 @@ class _ReserveScreenState extends State<ReserveScreen> {
                       setState(() {
                         loading = true;
                       });
-                      //progress indicator start show
-                      _callAPI().then((result) {
+                      Util().callAPI(regionData1.getRegion()!,regionData2.getRegion()!,dateData1.getDate()!).then((result) {
                         setState(() {
                           if (result != 0) {
                             _ticketList.clear();
@@ -153,27 +153,6 @@ class _ReserveScreenState extends State<ReserveScreen> {
       ),
       loading == true ? Center(child: CircularProgressIndicator()) : Text(''),
     ]);
-  }
-
-  Future _callAPI() async {
-    var url = Uri.parse('http://203.232.193.169:8080/air?depName=' +
-        regionData1.getRegion()! +
-        '&arrName=' +
-        regionData2.getRegion()! +
-        '&date=' +
-        dateData1.getDate()!);
-    final response = await http.get(url);
-    String responseBody = utf8.decode(response.bodyBytes);
-    status = jsonDecode(responseBody)['status'].toString();
-    log(status);
-    if (status == "200") {
-      var dataObjJson = jsonDecode(responseBody)['data'] as List;
-      List<Ticket> parsedResponse =
-          dataObjJson.map((dataJson) => Ticket.fromJson(dataJson)).toList();
-      return parsedResponse;
-    } else {
-      return 0;
-    }
   }
 }
 
